@@ -28,6 +28,7 @@ const RECONNECT_MAX_DELAY_MS = 30000;
 const SHEET_ID = process.env.SHEET_ID || "1e0LzlBvuXqDt9r3mu24Z1DCFTSrtFXR1IYB0R6VAbK8";
 const SHEET_NAME = process.env.SHEET_NAME || "Sheet1";
 const AUTH_DIR = process.env.WA_AUTH_DIR || "./auth";
+const WA_PAIRING_NUMBER = (process.env.WA_PAIRING_NUMBER || "").replace(/\D/g, "");
 const GOOGLE_SERVICE_ACCOUNT_PATH =
   process.env.GOOGLE_SERVICE_ACCOUNT_PATH || "./service-account.json";
 let resolvedSheetName = null;
@@ -300,6 +301,21 @@ async function startBot() {
 
   sock.ev.on("creds.update", saveCreds);
 
+  if (WA_PAIRING_NUMBER && !state.creds.registered) {
+    setTimeout(async () => {
+      try {
+        const code = await sock.requestPairingCode(WA_PAIRING_NUMBER);
+        const formatted = String(code || "")
+          .replace(/\s+/g, "")
+          .match(/.{1,4}/g)
+          ?.join("-") || code;
+        console.log(`Pairing code (${WA_PAIRING_NUMBER}): ${formatted}`);
+      } catch (err) {
+        console.log("Pairing code error:", err?.message || err);
+      }
+    }, 5000);
+  }
+
   async function refreshGroupCache(force = false) {
     const nowMs = Date.now();
     if (!force && groupNameToIdCache.size > 0 && nowMs - lastGroupCacheAt < GROUP_CACHE_TTL_MS) {
@@ -352,7 +368,9 @@ async function startBot() {
 
     if (qr) {
       console.log("\nScan QR:\n");
-      qrcode.generate(qr, { small: true });
+      if (!WA_PAIRING_NUMBER) {
+        qrcode.generate(qr, { small: true });
+      }
     }
 
     if (connection === "open") {
