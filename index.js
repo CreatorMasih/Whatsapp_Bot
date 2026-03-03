@@ -416,6 +416,7 @@ async function startBot() {
       console.log("\nScan QR:\n");
       if (!WA_PAIRING_NUMBER) {
         qrcode.generate(qr, { small: true });
+        console.log(`QR_RAW:${qr}`);
       }
     }
 
