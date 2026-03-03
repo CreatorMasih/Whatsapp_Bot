@@ -7,6 +7,7 @@ import makeWASocket, {
 
 import fs from "node:fs";
 import http from "node:http";
+import dns from "node:dns";
 import qrcode from "qrcode-terminal";
 import cron from "node-cron";
 import { google } from "googleapis";
@@ -15,6 +16,10 @@ import pino from "pino";
 import customParseFormat from "dayjs/plugin/customParseFormat.js";
 
 dayjs.extend(customParseFormat);
+
+if (typeof dns.setDefaultResultOrder === "function") {
+  dns.setDefaultResultOrder("ipv4first");
+}
 
 let cronTask = null;
 let reconnectTimer = null;
