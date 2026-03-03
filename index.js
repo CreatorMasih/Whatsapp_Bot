@@ -300,21 +300,30 @@ async function startBot() {
   });
 
   sock.ev.on("creds.update", saveCreds);
+  let pairingCodeRequested = false;
 
-  if (WA_PAIRING_NUMBER && !state.creds.registered) {
-    setTimeout(async () => {
-      try {
-        const code = await sock.requestPairingCode(WA_PAIRING_NUMBER);
-        const formatted = String(code || "")
-          .replace(/\s+/g, "")
-          .match(/.{1,4}/g)
-          ?.join("-") || code;
-        console.log(`Pairing code (${WA_PAIRING_NUMBER}): ${formatted}`);
-      } catch (err) {
-        console.log("Pairing code error:", err?.message || err);
-      }
-    }, 5000);
+  async function requestPairingCodeIfNeeded() {
+    if (!WA_PAIRING_NUMBER) return;
+    if (state.creds.registered) return;
+    if (pairingCodeRequested) return;
+
+    pairingCodeRequested = true;
+    try {
+      const code = await sock.requestPairingCode(WA_PAIRING_NUMBER);
+      const formatted = String(code || "")
+        .replace(/\s+/g, "")
+        .match(/.{1,4}/g)
+        ?.join("-") || code;
+      console.log(`Pairing code (${WA_PAIRING_NUMBER}): ${formatted}`);
+    } catch (err) {
+      pairingCodeRequested = false;
+      console.log("Pairing code error:", err?.message || err);
+    }
   }
+
+  requestPairingCodeIfNeeded().catch((err) => {
+    console.log("Pairing bootstrap error:", err?.message || err);
+  });
 
   async function refreshGroupCache(force = false) {
     const nowMs = Date.now();
@@ -365,6 +374,12 @@ async function startBot() {
 
   sock.ev.on("connection.update", async (update) => {
     const { connection, qr, lastDisconnect } = update;
+
+    if (connection === "connecting") {
+      requestPairingCodeIfNeeded().catch((err) => {
+        console.log("Pairing request on connect error:", err?.message || err);
+      });
+    }
 
     if (qr) {
       console.log("\nScan QR:\n");
