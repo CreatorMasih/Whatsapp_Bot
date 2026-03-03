@@ -36,6 +36,7 @@ const SHEET_NAME = process.env.SHEET_NAME || "Sheet1";
 const AUTH_DIR = process.env.WA_AUTH_DIR || "./auth";
 const WA_PAIRING_NUMBER = (process.env.WA_PAIRING_NUMBER || "").replace(/\D/g, "");
 const PORT = Number(process.env.PORT || 0);
+const BOOT_SIGNATURE = "boot-2026-03-03-v1";
 const GOOGLE_SERVICE_ACCOUNT_PATH =
   process.env.GOOGLE_SERVICE_ACCOUNT_PATH || "./service-account.json";
 let resolvedSheetName = null;
@@ -303,6 +304,12 @@ function getRecurringLastSentDate(statusValue) {
 // =============================
 
 async function startBot() {
+  console.log(
+    `[BOOT] ${BOOT_SIGNATURE} commit=${process.env.RAILWAY_GIT_COMMIT_SHA || "unknown"} node=${process.version}`
+  );
+  console.log(
+    `[BOOT] pairingNumberSet=${WA_PAIRING_NUMBER ? "yes" : "no"} authDir=${AUTH_DIR}`
+  );
   console.log(`Pairing mode: ${WA_PAIRING_NUMBER ? "enabled" : "disabled"}`);
   if (!fs.existsSync(AUTH_DIR)) {
     fs.mkdirSync(AUTH_DIR, { recursive: true });
