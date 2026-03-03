@@ -6,6 +6,7 @@ import makeWASocket, {
 } from "@whiskeysockets/baileys";
 
 import fs from "node:fs";
+import http from "node:http";
 import qrcode from "qrcode-terminal";
 import cron from "node-cron";
 import { google } from "googleapis";
@@ -29,9 +30,29 @@ const SHEET_ID = process.env.SHEET_ID || "1e0LzlBvuXqDt9r3mu24Z1DCFTSrtFXR1IYB0R
 const SHEET_NAME = process.env.SHEET_NAME || "Sheet1";
 const AUTH_DIR = process.env.WA_AUTH_DIR || "./auth";
 const WA_PAIRING_NUMBER = (process.env.WA_PAIRING_NUMBER || "").replace(/\D/g, "");
+const PORT = Number(process.env.PORT || 0);
 const GOOGLE_SERVICE_ACCOUNT_PATH =
   process.env.GOOGLE_SERVICE_ACCOUNT_PATH || "./service-account.json";
 let resolvedSheetName = null;
+
+function startHealthServer() {
+  if (!PORT || Number.isNaN(PORT)) return;
+
+  const server = http.createServer((req, res) => {
+    if (req.url === "/health") {
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ ok: true }));
+      return;
+    }
+
+    res.writeHead(200, { "Content-Type": "text/plain" });
+    res.end("wa-bot running");
+  });
+
+  server.listen(PORT, () => {
+    console.log(`Health server listening on port ${PORT}`);
+  });
+}
 
 const googleAuthOptions = {
   scopes: ["https://www.googleapis.com/auth/spreadsheets"],
@@ -277,6 +298,7 @@ function getRecurringLastSentDate(statusValue) {
 // =============================
 
 async function startBot() {
+  console.log(`Pairing mode: ${WA_PAIRING_NUMBER ? "enabled" : "disabled"}`);
   if (!fs.existsSync(AUTH_DIR)) {
     fs.mkdirSync(AUTH_DIR, { recursive: true });
   }
@@ -491,3 +513,5 @@ startBot().catch((err) => {
 verifySheetsAccess().catch((err) => {
   console.log("Sheets verification error:", getGoogleErrorMessage(err));
 });
+
+startHealthServer();
