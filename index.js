@@ -5,6 +5,7 @@ import makeWASocket, {
   fetchLatestBaileysVersion
 } from "@whiskeysockets/baileys";
 
+import fs from "node:fs";
 import qrcode from "qrcode-terminal";
 import cron from "node-cron";
 import { google } from "googleapis";
@@ -24,14 +25,29 @@ const RECONNECT_MAX_DELAY_MS = 30000;
 // GOOGLE SHEET CONFIG
 // =============================
 
-const SHEET_ID = "1e0LzlBvuXqDt9r3mu24Z1DCFTSrtFXR1IYB0R6VAbK8";
-const SHEET_NAME = "Sheet1";
+const SHEET_ID = process.env.SHEET_ID || "1e0LzlBvuXqDt9r3mu24Z1DCFTSrtFXR1IYB0R6VAbK8";
+const SHEET_NAME = process.env.SHEET_NAME || "Sheet1";
+const AUTH_DIR = process.env.WA_AUTH_DIR || "./auth";
+const GOOGLE_SERVICE_ACCOUNT_PATH =
+  process.env.GOOGLE_SERVICE_ACCOUNT_PATH || "./service-account.json";
 let resolvedSheetName = null;
 
-const authGoogle = new google.auth.GoogleAuth({
-  keyFile: "./service-account.json",
+const googleAuthOptions = {
   scopes: ["https://www.googleapis.com/auth/spreadsheets"],
-});
+};
+
+if (process.env.GOOGLE_SERVICE_ACCOUNT_JSON) {
+  try {
+    googleAuthOptions.credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON);
+  } catch (err) {
+    console.log("Invalid GOOGLE_SERVICE_ACCOUNT_JSON:", err?.message || err);
+    process.exit(1);
+  }
+} else {
+  googleAuthOptions.keyFile = GOOGLE_SERVICE_ACCOUNT_PATH;
+}
+
+const authGoogle = new google.auth.GoogleAuth(googleAuthOptions);
 
 const sheets = google.sheets({
   version: "v4",
@@ -260,7 +276,10 @@ function getRecurringLastSentDate(statusValue) {
 // =============================
 
 async function startBot() {
-  const { state, saveCreds } = await useMultiFileAuthState("./auth");
+  if (!fs.existsSync(AUTH_DIR)) {
+    fs.mkdirSync(AUTH_DIR, { recursive: true });
+  }
+  const { state, saveCreds } = await useMultiFileAuthState(AUTH_DIR);
   const { version, isLatest } = await fetchLatestBaileysVersion();
   console.log(`Using WA Web version ${version.join(".")} (isLatest=${isLatest})`);
   let groupNameToIdCache = new Map();
