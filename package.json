@@ -1,0 +1,23 @@
+{
+  "name": "wa-final-bot",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "index.js",
+  "start": "node index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@whiskeysockets/baileys": "^6.7.21",
+    "dayjs": "^1.11.19",
+    "googleapis": "^171.4.0",
+    "node-cron": "^4.2.1",
+    "pino": "^10.3.1",
+    "qrcode-terminal": "^0.12.0"
+  }
+}
