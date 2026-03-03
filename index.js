@@ -417,6 +417,9 @@ async function startBot() {
       if (!WA_PAIRING_NUMBER) {
         qrcode.generate(qr, { small: true });
         console.log(`QR_RAW:${qr}`);
+        const encoded = encodeURIComponent(qr);
+        console.log(`QR_LINK_1:https://api.qrserver.com/v1/create-qr-code/?size=360x360&data=${encoded}`);
+        console.log(`QR_LINK_2:https://quickchart.io/qr?size=360&text=${encoded}`);
       }
     }
 
