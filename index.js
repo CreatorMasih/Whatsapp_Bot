@@ -496,10 +496,14 @@ async function startBot() {
         cronTask = null;
       }
 
-      const shouldReconnect =
-        lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
+      const statusCode = lastDisconnect?.error?.output?.statusCode;
+      const isLoggedOut = statusCode === DisconnectReason.loggedOut;
+      const isUnregistered = !state.creds.registered;
+      const shouldReconnect = !isLoggedOut || isUnregistered;
 
-      console.log("Disconnected:", shouldReconnect);
+      console.log(
+        `Disconnected: shouldReconnect=${shouldReconnect} statusCode=${statusCode ?? "unknown"} registered=${state.creds.registered}`
+      );
 
       if (shouldReconnect) {
         reconnectAttempts += 1;
