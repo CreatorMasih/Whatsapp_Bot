@@ -344,11 +344,8 @@ async function startBot() {
     pairingCodeRequested = true;
     try {
       const code = await sock.requestPairingCode(WA_PAIRING_NUMBER);
-      const formatted = String(code || "")
-        .replace(/\s+/g, "")
-        .match(/.{1,4}/g)
-        ?.join("-") || code;
-      console.log(`Pairing code (${WA_PAIRING_NUMBER}): ${formatted}`);
+      const normalizedCode = String(code || "").replace(/\s+/g, "").toUpperCase();
+      console.log(`Pairing code (${WA_PAIRING_NUMBER}): ${normalizedCode}`);
     } catch (err) {
       pairingCodeRequested = false;
       console.log("Pairing code error:", err?.message || err);
